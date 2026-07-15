@@ -3,7 +3,7 @@
   "displayName": "Bedrock Inline",
   "publisher": "jun-suzuki",
   "description": "A VS Code extension for Amazon Bedrock Inline suggestions",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "icon": "images/icon.png",
   "main": "./out/extension.js",
   "scripts": {

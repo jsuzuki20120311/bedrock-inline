@@ -137,7 +137,7 @@ private waitDebounce(token: vscode.CancellationToken): Promise<boolean> {
 
   }
 
-  async fetchNextSuggestion(prefix: string, suffix: string, token?: vscode.CancellationToken): Promise<string> {
+  async fetchNextSuggestion(prefix: string, suffix: string, languageId: string, token?: vscode.CancellationToken): Promise<string> {
     console.log("fetchNextSuggestion!");
 
     this.onChange(true);
@@ -150,31 +150,25 @@ private waitDebounce(token: vscode.CancellationToken): Promise<boolean> {
       return abortController.abort();
     });
 
-    const userPrompt = `以下のコンテキストに基づいて、<cursor> 部分に入る最適なコードまたはテキストを提案してください。
+    const systemPrompt = `You are an expert code completion engine embedded in a code editor. Your sole task is Fill-In-the-Middle (FIM): given the code immediately before and after the cursor, produce the exact text to insert at the cursor so that the file reads naturally and correctly.
 
----
-■ カーソル前のテキスト:
-\`\`\`
-${ prefix }
-\`\`\`
+Strict output rules:
+1. Output ONLY the completion text — no explanations, no markdown fences, no apologies.
+2. Do NOT repeat any text already present in the suffix; your output must connect seamlessly to it.
+3. Preserve the indentation style and conventions of the surrounding code.
+4. Output multiple lines only when the context clearly requires it (e.g. closing a multi-line block).
+5. If no completion is needed, output an empty string and nothing else.`;
 
-■ カーソル位置: <cursor>
+    const userPrompt = `Language: ${languageId}
 
-■ カーソル後のテキスト:
-\`\`\`
-${ suffix }
-\`\`\`
----
+<prefix>
+${prefix}
+</prefix>
+<suffix>
+${suffix}
+</suffix>
 
-【出力】`;
-
-    const systemPrompt = `ユーザーから提供される「カーソル前のテキスト」と「カーソル後のテキスト」の隙間（カーソル位置）に入る、最も自然で適切なコードまたはテキストの「1行以内の続き」を予測して提案してください。
-
-【厳格な出力ルール】
-1. 提案内容のみを直接出力してください。解説、導入文（「以下が提案です」など）、およびマークダウンのコードブロック（\`\`\`）は一切含めてはなりません。
-2. 提案は必ず「改行を含まない1行のみ」にしてください。改行文字（\n, \r）は出力しないでください。
-3. すでに「カーソル後のテキスト」に書かれている内容と重複するコードを出力しないよう、自然に繋がる部分のみを抽出して出力してください。
-4. 提案すべき内容がない場合は、何も出力せず（空文字）終了してください。`;
+Insert the completion at the cursor position (between prefix and suffix).`;
 
     try {
       const input: ConverseCommandInput = {
@@ -258,7 +252,7 @@ ${ suffix }
     }
 
     try {
-      const suggestion = await this.fetchNextSuggestion(prefix, suffix, token);
+      const suggestion = await this.fetchNextSuggestion(prefix, suffix, document.languageId, token);
       if (!suggestion) {
         return [];
       }
