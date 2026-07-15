@@ -1,0 +1,103 @@
+{
+  "name": "bedrock-inline",
+  "displayName": "Bedrock Inline",
+  "publisher": "jun-suzuki",
+  "description": "A VS Code extension for Amazon Bedrock Inline suggestions",
+  "version": "0.0.6",
+  "icon": "images/icon.png",
+  "main": "./out/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "build": "npm run compile && npx vsce package --out ./dist/bedrock-next.vsix"
+  },
+  "engines": {
+    "vscode": "^1.125.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "bedrockInline.toggleNextSuggestion",
+        "title": "Bedrock Inline: Toggle Next Suggestion"
+      }
+    ],
+    "configuration": {
+      "title": "Bedrock Inline",
+      "properties": {
+        "bedrockInline.profile": {
+          "type": "string",
+          "default": "",
+          "description": "Set the AWS profile name."
+        },
+        "bedrockInline.region": {
+          "type": "string",
+          "default": "ap-northeast-1",
+          "description": "Set the Amazon Bedrock region."
+        },
+        "bedrockInline.modelId": {
+          "type": "string",
+          "default": "openai.gpt-oss-20b-1:0",
+          "description": "Set the model ID to use."
+        },
+        "bedrockInline.accessKeyId": {
+          "type": "string",
+          "default": "",
+          "description": "Set the access key ID used for authentication."
+        },
+        "bedrockInline.secretAccessKey": {
+          "type": "string",
+          "default": "",
+          "description": "Set the secret access key used for authentication."
+        },
+        "bedrockInline.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Adjust response diversity."
+        },
+        "bedrockInline.maxTokens": {
+          "type": "number",
+          "default": 200,
+          "minimum": 1,
+          "maximum": 4000,
+          "description": "Set the maximum number of tokens generated per suggestion."
+        },
+        "bedrockInline.systemPrompt": {
+          "type": "string",
+          "default": "You are a code completion assistant.Output ONLY the immediate next line of code that continues the prefix.Do NOT generate multiple lines. Do NOT write any explanations, wrap in markdown, or output a newline character.",
+          "description": "Set the system prompt to guide the model's behavior."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock": "^3.1085.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.1085.0",
+    "@aws-sdk/credential-providers": "^3.1085.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "24.x",
+    "@types/vscode": "^1.125.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0",
+    "eslint": "^10.5.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.1"
+  },
+  "overrides": {
+    "diff": "^8.0.4",
+    "serialize-javascript": "^7.0.6"
+  }
+}
