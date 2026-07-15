@@ -6,5 +6,4 @@ export type CompletionSettings = {
   modelId: string;
   temperature: number;
   maxTokens: number;
-  systemPrompt: string;
 };

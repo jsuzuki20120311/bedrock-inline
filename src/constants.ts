@@ -1,1 +1,1 @@
-export const FEATURE_STATE_KEY = 'nextSuggestionEnabled';
+export const FEATURE_STATE_KEY = 'jun-suzuki.bedrock-inline.enabled';

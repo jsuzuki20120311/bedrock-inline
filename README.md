@@ -6,9 +6,7 @@ A VS Code plugin that brings Amazon Bedrock's powerful AI capabilities to your e
 
 - **Inline Suggestions**: Get real-time AI-powered code suggestions as you type
 - **Amazon Bedrock Integration**: Leverage Bedrock's foundation models for high-quality code generation
-- **BYOK Support**: Use your own AWS credentials and API keys for complete control
 - **Seamless Integration**: Works directly in VS Code without external dependencies
-- **Fast & Responsive**: Low-latency completions for an uninterrupted coding experience
 
 ## Installation
 
@@ -16,12 +14,6 @@ A VS Code plugin that brings Amazon Bedrock's powerful AI capabilities to your e
 2. Open the extension settings
 3. Configure your Amazon Bedrock credentials (AWS Access Key ID, Secret Key, and Region)
 4. Start coding and enjoy AI-powered inline suggestions
-
-## Requirements
-
-- VS Code 1.70.0 or higher
-- Active AWS account with Bedrock access
-- AWS credentials with appropriate Bedrock permissions
 
 ## Configuration
 
@@ -33,11 +25,11 @@ Configure the following in your VS Code settings:
 {
   "bedrockInline.profile": "your-aws-profile-name",
   // or
-  "bedrockInline.awsAccessKeyId": "your-access-key-id",
-  "bedrockInline.awsSecretAccessKey": "your-secret-access-key",
+  "bedrockInline.accessKeyId": "your-access-key-id",
+  "bedrockInline.secretAccessKey": "your-secret-access-key",
 
-  "bedrockInline.awsRegion": "us-west-2",
-  "bedrockInline.modelId": "openai.gpt-oss-20b:1.0.0"
+  "bedrockInline.region": "us-west-2",
+  "bedrockInline.modelId": "qwen.qwen3-coder-30b-a3b-v1:0"
 }
 ```
 
@@ -46,7 +38,7 @@ Configure the following in your VS Code settings:
 1. Start typing code in any supported file
 2. Inline suggestions will appear automatically
 3. Press `Tab` to accept a suggestion or `Escape` to dismiss it
-4. Use `Ctrl+Shift+A` (or `Cmd+Shift+A` on macOS) to manually trigger suggestions
+4. Run `Bedrock Inline: Toggle Next Suggestion` from the Command Palette to enable or disable suggestions
 
 ## Contributing
 

@@ -6,18 +6,26 @@ import { FEATURE_STATE_KEY } from './constants';
 let statusBarItem: vscode.StatusBarItem | undefined;
 
 
-function updateStatusBarItem(newFeatureState: boolean): void {
+function updateStatusBarItem(newFeatureState: boolean, isLoading?: boolean): void {
   if (!statusBarItem) {
     return;
   }
-  if (newFeatureState) {
-    statusBarItem.text = '$(pass) Bedrock Inline: ON';
-    statusBarItem.tooltip = 'Click to turn Bedrock Inline off.';
-  } else {
+
+  statusBarItem.backgroundColor = undefined;
+
+  if (!newFeatureState) {
     statusBarItem.text = '$(circle-slash) Bedrock Inline: OFF';
     statusBarItem.tooltip = 'Click to turn Bedrock Inline on.';
+    return;
   }
-  statusBarItem.backgroundColor = undefined;
+
+  if (isLoading) {
+    statusBarItem.text = '$(loading) Bedrock Inline: ON';
+  } else {
+    statusBarItem.text = '$(pass) Bedrock Inline: ON';
+  }
+
+  statusBarItem.tooltip = 'Click to turn Bedrock Inline off.';
 }
 
 
@@ -41,7 +49,11 @@ export function activate(context: vscode.ExtensionContext) {
   statusBarItem.show();
   context.subscriptions.push(toggleDisposable);
 
-  const amazonBedrockInlineCompletionItemProvider = new AmazonBedrockInlineCompletionItemProvider(context);
+  const onStateChange = (loading: boolean) => {
+    updateStatusBarItem(context.globalState.get<boolean>(FEATURE_STATE_KEY, false), loading);
+  };
+
+  const amazonBedrockInlineCompletionItemProvider = new AmazonBedrockInlineCompletionItemProvider(context, onStateChange);
   const amazonBedrockInlineCompletionItemProviderDisposable = vscode.languages.registerInlineCompletionItemProvider(
     { pattern: '**' },
     amazonBedrockInlineCompletionItemProvider
