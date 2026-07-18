@@ -28,18 +28,27 @@ export class AmazonBedrockInlineCompletionItemProvider implements vscode.InlineC
 
   private onChange: (isLoading: boolean) => void;
 
-  constructor(context: vscode.ExtensionContext, onChange: (isLoading: boolean) => void) {
+  private readonly getCredentials: () => Promise<Pick<CompletionSettings, 'accessKeyId' | 'secretAccessKey'>>;
+
+  constructor(
+    context: vscode.ExtensionContext,
+    onChange: (isLoading: boolean) => void,
+    getCredentials: () => Promise<Pick<CompletionSettings, 'accessKeyId' | 'secretAccessKey'>>,
+  ) {
     this.context = context;
     this.onChange = onChange;
+    this.getCredentials = getCredentials;
   }
 
-  private getCompletionSettings(): CompletionSettings {
+  private async getCompletionSettings(): Promise<CompletionSettings> {
     const configuration = vscode.workspace.getConfiguration('bedrockInline');
+    const credentials = await this.getCredentials();
+
     return {
       region: configuration.get<string>('region', 'ap-northeast-1').trim(),
       profile: configuration.get<string>('profile', '').trim(),
-      accessKeyId: configuration.get<string>('accessKeyId', '').trim(),
-      secretAccessKey: configuration.get<string>('secretAccessKey', '').trim(),
+      accessKeyId: credentials.accessKeyId,
+      secretAccessKey: credentials.secretAccessKey,
       modelId: configuration.get<string>('modelId', 'qwen.qwen3-coder-30b-a3b-v1:0').trim(),
       temperature: configuration.get<number>('temperature', 0.1),
       topP: configuration.get<number>('topP', 0.9),
@@ -202,7 +211,7 @@ private waitDebounce(token: vscode.CancellationToken): Promise<boolean> {
   async fetchNextSuggestion(prefix: string, suffix: string, languageId: string, token?: vscode.CancellationToken): Promise<string> {
     this.onChange(true);
 
-    const settings = this.getCompletionSettings();
+    const settings = await this.getCompletionSettings();
     const client = this.getBedrockRuntimeClient(settings);
 
     const abortController = new AbortController();
@@ -241,8 +250,6 @@ ${prefix}
 ${suffix}
 </suffix>`;
 
-    console.log('aaaaaaaaaaaaa');
-
     try {
       const input: ConverseCommandInput = {
         modelId: settings.modelId,
@@ -274,16 +281,17 @@ ${suffix}
       const textContent = this.findResultText(response.output?.message?.content);
 
       const normalized = this.normalizeSuggestion(textContent, suffix);
-      console.log('Normalized suggestion:', normalized);
+      console.log('Normalized suggestion: ', normalized);
       return normalized;
 
     } catch (error) {
-      console.error('Error fetching suggestion:', error);
-
       // ユーザーによるキャンセル（abort）の場合は空文字を返すなど、VS Codeプラグイン向けの制御
       if (error instanceof Error && error.name === 'AbortError') {
+        console.error('AbortError: ', error);
         return "";
       }
+
+      console.error('Error fetching suggestion: ', error);
       throw error;
     } finally {
       cancellation?.dispose();
@@ -321,7 +329,6 @@ ${suffix}
     }
 
     try {
-      console.log('Fetching suggestion for prefix:', prefix, 'and suffix:', suffix);
       const suggestion = await this.fetchNextSuggestion(prefix, suffix, document.languageId, token);
       if (!suggestion) {
         return [];

@@ -12,7 +12,8 @@ A VS Code plugin that brings Amazon Bedrock's powerful AI capabilities to your e
 
 1. Install the extension from the VS Code Marketplace
 2. Open the extension settings
-3. Configure your Amazon Bedrock credentials (AWS Access Key ID, Secret Key, and Region)
+3. Configure your Amazon Bedrock region and optional AWS profile
+4. Run `Bedrock Inline: Set AWS Credentials` if you want to use direct access keys
 4. Start coding and enjoy AI-powered inline suggestions
 
 ## Configuration
@@ -24,10 +25,6 @@ Configure the following in your VS Code settings:
 ```json
 {
   "bedrockInline.profile": "your-aws-profile-name",
-  // or
-  "bedrockInline.accessKeyId": "your-access-key-id",
-  "bedrockInline.secretAccessKey": "your-secret-access-key",
-
   "bedrockInline.region": "us-west-2",
   "bedrockInline.modelId": "qwen.qwen3-coder-30b-a3b-v1:0",
   "bedrockInline.temperature": 0.1,
@@ -35,6 +32,8 @@ Configure the following in your VS Code settings:
   "bedrockInline.maxTokens": 256
 }
 ```
+
+AWS credentials are no longer meant to live in `settings.json`. Use the `Bedrock Inline: Set AWS Credentials` command to store them in VS Code Secret Storage instead.
 
 ## Usage
 

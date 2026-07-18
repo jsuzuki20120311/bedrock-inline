@@ -3,7 +3,7 @@
   "displayName": "Bedrock Inline",
   "publisher": "jun-suzuki",
   "description": "A VS Code extension for Amazon Bedrock Inline suggestions",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "icon": "images/icon.png",
   "main": "./out/extension.js",
   "scripts": {
@@ -33,6 +33,14 @@
       {
         "command": "bedrockInline.triggerSuggestion",
         "title": "Bedrock Inline: Trigger Suggestion"
+      },
+      {
+        "command": "bedrockInline.setCredentials",
+        "title": "Bedrock Inline: Set AWS Credentials"
+      },
+      {
+        "command": "bedrockInline.clearCredentials",
+        "title": "Bedrock Inline: Clear AWS Credentials"
       }
     ],
     "keybindings": [
@@ -64,12 +72,14 @@
         "bedrockInline.accessKeyId": {
           "type": "string",
           "default": "",
-          "description": "Set the access key ID used for authentication."
+          "description": "Deprecated. Use the 'Bedrock Inline: Set AWS Credentials' command to store credentials securely.",
+          "deprecationMessage": "Use the 'Bedrock Inline: Set AWS Credentials' command. Credentials are now stored in VS Code Secret Storage."
         },
         "bedrockInline.secretAccessKey": {
           "type": "string",
           "default": "",
-          "description": "Set the secret access key used for authentication."
+          "description": "Deprecated. Use the 'Bedrock Inline: Set AWS Credentials' command to store credentials securely.",
+          "deprecationMessage": "Use the 'Bedrock Inline: Set AWS Credentials' command. Credentials are now stored in VS Code Secret Storage."
         },
         "bedrockInline.temperature": {
           "type": "number",
