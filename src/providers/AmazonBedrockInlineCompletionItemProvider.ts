@@ -37,7 +37,7 @@ export class AmazonBedrockInlineCompletionItemProvider implements vscode.InlineC
       secretAccessKey: configuration.get<string>('secretAccessKey', '').trim(),
       modelId: configuration.get<string>('modelId', 'qwen.qwen3-coder-30b-a3b-v1:0').trim(),
       temperature: configuration.get<number>('temperature', 0),
-      maxTokens: configuration.get<number>('maxTokens', 2000),
+      maxTokens: configuration.get<number>('maxTokens', 512),
     };
   };
 
