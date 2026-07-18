@@ -38,7 +38,22 @@ export function activate(context: vscode.ExtensionContext) {
     updateStatusBarItem(newFeatureState);
   };
 
+  const handleTriggerSuggestion = async () => {
+    if (!vscode.window.activeTextEditor) {
+      return;
+    }
+
+    const featureState = context.globalState.get<boolean>(FEATURE_STATE_KEY, false);
+    if (!featureState) {
+      await context.globalState.update(FEATURE_STATE_KEY, true);
+      updateStatusBarItem(true);
+    }
+
+    await vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
+  };
+
   const toggleDisposable = vscode.commands.registerCommand('bedrockInline.toggleNextSuggestion', handleToggleFeatureEnabled);
+  const triggerDisposable = vscode.commands.registerCommand('bedrockInline.triggerSuggestion', handleTriggerSuggestion);
 
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
   statusBarItem.command = 'bedrockInline.toggleNextSuggestion';
@@ -48,6 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
   updateStatusBarItem(featureState);
   statusBarItem.show();
   context.subscriptions.push(toggleDisposable);
+  context.subscriptions.push(triggerDisposable);
 
   const onStateChange = (loading: boolean) => {
     updateStatusBarItem(context.globalState.get<boolean>(FEATURE_STATE_KEY, false), loading);

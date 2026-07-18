@@ -3,7 +3,7 @@
   "displayName": "Bedrock Inline",
   "publisher": "jun-suzuki",
   "description": "A VS Code extension for Amazon Bedrock Inline suggestions",
-  "version": "0.0.11",
+  "version": "0.2.0",
   "icon": "images/icon.png",
   "main": "./out/extension.js",
   "scripts": {
@@ -29,6 +29,18 @@
       {
         "command": "bedrockInline.toggleNextSuggestion",
         "title": "Bedrock Inline: Toggle Next Suggestion"
+      },
+      {
+        "command": "bedrockInline.triggerSuggestion",
+        "title": "Bedrock Inline: Trigger Suggestion"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "bedrockInline.triggerSuggestion",
+        "key": "ctrl+alt+.",
+        "mac": "cmd+alt+.",
+        "when": "editorTextFocus && !editorReadonly"
       }
     ],
     "configuration": {
@@ -61,14 +73,21 @@
         },
         "bedrockInline.temperature": {
           "type": "number",
-          "default": 0,
+          "default": 0.1,
           "minimum": 0,
           "maximum": 1,
           "description": "Adjust response diversity."
         },
+        "bedrockInline.topP": {
+          "type": "number",
+          "default": 0.9,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Adjust nucleus sampling for response stability."
+        },
         "bedrockInline.maxTokens": {
           "type": "number",
-          "default": 512,
+          "default": 256,
           "minimum": 1,
           "description": "Set the maximum number of tokens generated per suggestion."
         }

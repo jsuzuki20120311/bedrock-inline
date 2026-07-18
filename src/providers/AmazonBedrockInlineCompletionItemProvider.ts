@@ -9,6 +9,11 @@ export class AmazonBedrockInlineCompletionItemProvider implements vscode.InlineC
 
   private readonly DEBOUNCE_DELAY = 250;
 
+  private readonly MAX_PREFIX_LINES = 120;
+  private readonly MAX_SUFFIX_LINES = 80;
+  private readonly MAX_PREFIX_CHARS = 4000;
+  private readonly MAX_SUFFIX_CHARS = 2000;
+
   private readonly context: vscode.ExtensionContext;
 
   private debounceTimer: NodeJS.Timeout | undefined;
@@ -36,10 +41,67 @@ export class AmazonBedrockInlineCompletionItemProvider implements vscode.InlineC
       accessKeyId: configuration.get<string>('accessKeyId', '').trim(),
       secretAccessKey: configuration.get<string>('secretAccessKey', '').trim(),
       modelId: configuration.get<string>('modelId', 'qwen.qwen3-coder-30b-a3b-v1:0').trim(),
-      temperature: configuration.get<number>('temperature', 0),
-      maxTokens: configuration.get<number>('maxTokens', 512),
+      temperature: configuration.get<number>('temperature', 0.1),
+      topP: configuration.get<number>('topP', 0.9),
+      maxTokens: configuration.get<number>('maxTokens', 256),
     };
   };
+
+  private buildContext(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+  ): { prefix: string; suffix: string } {
+    const prefixStartLine = Math.max(0, position.line - this.MAX_PREFIX_LINES);
+    const prefixRange = new vscode.Range(new vscode.Position(prefixStartLine, 0), position);
+    let prefix = document.getText(prefixRange);
+    if (prefix.length > this.MAX_PREFIX_CHARS) {
+      prefix = prefix.slice(-this.MAX_PREFIX_CHARS);
+    }
+
+    const suffixEndLine = Math.min(document.lineCount - 1, position.line + this.MAX_SUFFIX_LINES);
+    const suffixEndPosition = new vscode.Position(
+      suffixEndLine,
+      document.lineAt(suffixEndLine).text.length,
+    );
+    const suffixRange = new vscode.Range(position, suffixEndPosition);
+    let suffix = document.getText(suffixRange);
+    if (suffix.length > this.MAX_SUFFIX_CHARS) {
+      suffix = suffix.slice(0, this.MAX_SUFFIX_CHARS);
+    }
+
+    return { prefix, suffix };
+  }
+
+  private removeSuffixOverlap(suggestion: string, suffix: string): string {
+    if (!suggestion || !suffix) {
+      return suggestion;
+    }
+
+    const maxOverlap = Math.min(suggestion.length, suffix.length);
+    for (let overlap = maxOverlap; overlap > 0; overlap--) {
+      if (suggestion.endsWith(suffix.slice(0, overlap))) {
+        return suggestion.slice(0, suggestion.length - overlap);
+      }
+    }
+
+    return suggestion;
+  }
+
+  private normalizeSuggestion(raw: string, suffix: string): string {
+    if (!raw) {
+      return '';
+    }
+
+    let suggestion = raw.replace(/\r\n?/g, '\n');
+
+    // Models occasionally wrap output in fenced code blocks.
+    suggestion = suggestion.replace(/^```[a-zA-Z0-9_-]*\n?/, '');
+    suggestion = suggestion.replace(/\n?```\s*$/, '');
+
+    suggestion = this.removeSuffixOverlap(suggestion, suffix);
+
+    return suggestion;
+  }
 
 private waitDebounce(token: vscode.CancellationToken): Promise<boolean> {
   if (token.isCancellationRequested) {
@@ -138,8 +200,6 @@ private waitDebounce(token: vscode.CancellationToken): Promise<boolean> {
   }
 
   async fetchNextSuggestion(prefix: string, suffix: string, languageId: string, token?: vscode.CancellationToken): Promise<string> {
-    console.log("fetchNextSuggestion!");
-
     this.onChange(true);
 
     const settings = this.getCompletionSettings();
@@ -150,25 +210,38 @@ private waitDebounce(token: vscode.CancellationToken): Promise<boolean> {
       return abortController.abort();
     });
 
-    const systemPrompt = `You are an expert code completion engine embedded in a code editor. Your sole task is Fill-In-the-Middle (FIM): given the code immediately before and after the cursor, produce the exact text to insert at the cursor so that the file reads naturally and correctly.
+    const systemPrompt = `You are an expert code completion engine embedded in a code editor. Your sole task is Fill-In-the-Middle (FIM): given code before and after the cursor, return only the text that should be inserted at the cursor.
 
 Strict output rules:
 1. Output ONLY the completion text — no explanations, no markdown fences, no apologies.
-2. Do NOT repeat any text already present in the suffix; your output must connect seamlessly to it.
-3. Preserve the indentation style and conventions of the surrounding code.
-4. Output multiple lines only when the context clearly requires it (e.g. closing a multi-line block).
-5. If no completion is needed, output an empty string and nothing else.`;
+2. Prefer a single-line completion. Output multiple lines only if required by syntax.
+3. Do NOT repeat text already present in the suffix. Connect seamlessly.
+4. Match the surrounding style exactly (indentation, quotes, semicolons, naming conventions).
+5. Complete the immediate intent near the cursor. Avoid unrelated refactors or comments.
+6. If no useful completion is possible, output an empty string.
+
+Language-specific guidance:
+- For TypeScript/JavaScript, prioritize type-safe and compile-ready code.
+- Keep completions concise and locally relevant.`;
 
     const userPrompt = `Language: ${languageId}
+
+Complete at the cursor between <prefix> and <suffix>.
+
+Rules:
+- Return only insertion text.
+- Do not include text that already appears at the start of <suffix>.
+- Prefer minimal completion that keeps code valid.
 
 <prefix>
 ${prefix}
 </prefix>
+
 <suffix>
 ${suffix}
-</suffix>
+</suffix>`;
 
-Insert the completion at the cursor position (between prefix and suffix).`;
+    console.log('aaaaaaaaaaaaa');
 
     try {
       const input: ConverseCommandInput = {
@@ -190,7 +263,8 @@ Insert the completion at the cursor position (between prefix and suffix).`;
         ],
         inferenceConfig: {
           maxTokens: settings.maxTokens,
-          temperature: settings.temperature
+          temperature: settings.temperature,
+          topP: settings.topP,
         }
       };
 
@@ -198,9 +272,14 @@ Insert the completion at the cursor position (between prefix and suffix).`;
       const response = await client.send(command, { abortSignal: abortController.signal });
 
       const textContent = this.findResultText(response.output?.message?.content);
-      return textContent;
+
+      const normalized = this.normalizeSuggestion(textContent, suffix);
+      console.log('Normalized suggestion:', normalized);
+      return normalized;
 
     } catch (error) {
+      console.error('Error fetching suggestion:', error);
+
       // ユーザーによるキャンセル（abort）の場合は空文字を返すなど、VS Codeプラグイン向けの制御
       if (error instanceof Error && error.name === 'AbortError') {
         return "";
@@ -225,17 +304,7 @@ Insert the completion at the cursor position (between prefix and suffix).`;
       return [];
     }
 
-    const prefixRange = new vscode.Range(new vscode.Position(0, 0), position);
-    let prefix = document.getText(prefixRange);
-    if (prefix.length > 2000) {
-      prefix = prefix.slice(-2000);
-    }
-
-    const suffixRange = new vscode.Range(position, new vscode.Position(document.lineCount - 1, document.lineAt(document.lineCount - 1).text.length));
-    let suffix = document.getText(suffixRange);
-    if (suffix.length > 2000) {
-      suffix = suffix.slice(0, 2000);
-    }
+    const { prefix, suffix } = this.buildContext(document, position);
 
     if (!prefix.trim() && !suffix.trim()) {
       return [];
@@ -252,6 +321,7 @@ Insert the completion at the cursor position (between prefix and suffix).`;
     }
 
     try {
+      console.log('Fetching suggestion for prefix:', prefix, 'and suffix:', suffix);
       const suggestion = await this.fetchNextSuggestion(prefix, suffix, document.languageId, token);
       if (!suggestion) {
         return [];

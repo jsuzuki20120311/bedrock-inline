@@ -5,5 +5,6 @@ export type CompletionSettings = {
   secretAccessKey: string;
   modelId: string;
   temperature: number;
+  topP: number;
   maxTokens: number;
 };

@@ -29,7 +29,10 @@ Configure the following in your VS Code settings:
   "bedrockInline.secretAccessKey": "your-secret-access-key",
 
   "bedrockInline.region": "us-west-2",
-  "bedrockInline.modelId": "qwen.qwen3-coder-30b-a3b-v1:0"
+  "bedrockInline.modelId": "qwen.qwen3-coder-30b-a3b-v1:0",
+  "bedrockInline.temperature": 0.1,
+  "bedrockInline.topP": 0.9,
+  "bedrockInline.maxTokens": 256
 }
 ```
 
@@ -38,7 +41,8 @@ Configure the following in your VS Code settings:
 1. Start typing code in any supported file
 2. Inline suggestions will appear automatically
 3. Press `Tab` to accept a suggestion or `Escape` to dismiss it
-4. Run `Bedrock Inline: Toggle Next Suggestion` from the Command Palette to enable or disable suggestions
+4. Press `Cmd+Alt+.` on macOS (`Ctrl+Alt+.` on Windows/Linux) to explicitly trigger a suggestion
+5. Run `Bedrock Inline: Toggle Next Suggestion` from the Command Palette to enable or disable suggestions
 
 ## Contributing
 
