@@ -3,7 +3,7 @@
   "displayName": "Bedrock Inline",
   "publisher": "jun-suzuki",
   "description": "A VS Code extension for Amazon Bedrock Inline suggestions",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "icon": "images/icon.png",
   "main": "./out/extension.js",
   "scripts": {
@@ -68,7 +68,7 @@
         },
         "bedrockInline.maxTokens": {
           "type": "number",
-          "default": 2000,
+          "default": 512,
           "minimum": 1,
           "description": "Set the maximum number of tokens generated per suggestion."
         }
